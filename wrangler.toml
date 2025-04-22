@@ -4,3 +4,12 @@ compatibility_flags = ["nodejs_compat"]
 compatibility_date = "2025-03-28"
 pages_build_output_dir = "./build/client"
 send_metrics = false
+
+# Build configuration for Cloudflare Pages
+[build]
+  # Increase memory limit for build process
+  command = "NODE_OPTIONS=\"--max-old-space-size=4096\" pnpm run build"
+
+# Define environment variables for build
+[vars]
+  VITE_OPTIMIZE_MEMORY = "true"

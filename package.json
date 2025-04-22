@@ -11,8 +11,9 @@
     "email": "maintainers@bolt.diy"
   },
   "scripts": {
-    "deploy": "npm run build && wrangler pages deploy",
+    "deploy": "npm run build:optimized && wrangler pages deploy",
     "build": "remix vite:build",
+    "build:optimized": "node scripts/optimize-build.js",
     "dev": "node pre-start.cjs  && remix vite:dev",
     "test": "vitest --run",
     "test:watch": "vitest",

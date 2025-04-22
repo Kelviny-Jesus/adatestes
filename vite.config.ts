@@ -95,31 +95,39 @@ export default defineConfig((config) => {
       target: 'esnext',
       // Increase chunk size warning limit
       chunkSizeWarningLimit: 1000,
-      // Optimize build with more aggressive settings
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: config.mode === 'production',
-          drop_debugger: true,
-        },
-      },
+      // Use esbuild instead of terser for minification (less memory intensive)
+      minify: 'esbuild',
+      // Disable source maps in production to reduce memory usage
+      sourcemap: false,
+      // Reduce memory usage during build
+      assetsInlineLimit: 4096, // Reduce inlined assets size
       // Configure chunking strategy for better performance and memory usage
       rollupOptions: {
+        // Reduce memory usage during tree-shaking
+        treeshake: {
+          moduleSideEffects: false,
+          propertyReadSideEffects: false,
+          tryCatchDeoptimization: false
+        },
         output: {
-          // Split large dependencies into smaller chunks
+          // Use simpler chunking strategy to reduce memory usage
           manualChunks: (id) => {
             // React and related libraries
             if (id.includes('node_modules/react') || 
-                id.includes('node_modules/react-dom') || 
-                id.includes('node_modules/react-router')) {
+                id.includes('node_modules/react-dom')) {
               return 'vendor-react';
+            }
+            
+            // React Router
+            if (id.includes('node_modules/react-router') || 
+                id.includes('node_modules/@remix-run')) {
+              return 'vendor-router';
             }
             
             // UI component libraries
             if (id.includes('node_modules/@headlessui') || 
                 id.includes('node_modules/@radix-ui') || 
-                id.includes('node_modules/@heroicons') ||
-                id.includes('node_modules/lucide-react')) {
+                id.includes('node_modules/@heroicons')) {
               return 'vendor-ui';
             }
             
@@ -127,23 +135,6 @@ export default defineConfig((config) => {
             if (id.includes('node_modules/@codemirror') || 
                 id.includes('node_modules/@lezer')) {
               return 'vendor-codemirror';
-            }
-            
-            // AI SDKs
-            if (id.includes('node_modules/@ai-sdk') || 
-                id.includes('node_modules/ai')) {
-              return 'vendor-ai';
-            }
-            
-            // Chart and visualization libraries
-            if (id.includes('node_modules/chart.js') || 
-                id.includes('node_modules/react-chartjs')) {
-              return 'vendor-charts';
-            }
-            
-            // Other large libraries
-            if (id.includes('node_modules/framer-motion')) {
-              return 'vendor-framer';
             }
             
             // Keep node_modules in a separate chunk
@@ -208,23 +199,36 @@ export default defineConfig((config) => {
           api: 'modern-compiler',
         },
       },
-      // Optimize CSS output
+      // Disable source maps for CSS
       devSourcemap: false,
-      // Minimize CSS in production
+      // Simple CSS minification without cssnano
       ...(config.mode === 'production' ? {
         postcss: {
           plugins: [
-            // Use inline configuration instead of requiring cssnano
             {
-              postcssPlugin: 'cssnano',
+              postcssPlugin: 'internal-minify',
               Once(root) {
-                // Basic CSS optimization
-                // This is a simplified version that doesn't require cssnano
+                // Minimal CSS optimization
               }
             }
           ],
         },
       } : {}),
+    },
+    // Optimize Vite's own memory usage
+    optimizeDeps: {
+      // Use noDiscovery instead of disabled (for Vite 5.1+)
+      noDiscovery: config.mode === 'production',
+      // Limit the number of entries processed at once
+      entries: ['./app/entry.client.tsx'],
+      // Exclude large dependencies from optimization
+      exclude: [
+        '@webcontainer/api',
+        'framer-motion',
+        '@codemirror/lang-javascript',
+        '@codemirror/lang-html',
+        '@codemirror/lang-css'
+      ]
     },
   };
 });
