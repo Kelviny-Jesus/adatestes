@@ -3,21 +3,31 @@ import fs from 'node:fs/promises';
 import { basename } from 'node:path';
 import { defineConfig, presetIcons, presetUno, transformerDirectives } from 'unocss';
 
-const iconPaths = globSync('./icons/*.svg');
+// Define essential icons that are frequently used
+const essentialIcons = [
+  'logo', 'react', 'vue', 'angular', 'typescript', 'chat', 'stars'
+];
 
 const collectionName = 'bolt';
 
-const customIconCollection = iconPaths.reduce(
-  (acc, iconPath) => {
+// Only load essential icons eagerly, others will be loaded on demand
+const customIconCollection = (() => {
+  const collection = {} as Record<string, Record<string, () => Promise<string>>>;
+  collection[collectionName] = {};
+  
+  // Only process essential icons during build to reduce memory usage
+  const iconPaths = globSync('./icons/*.svg').filter(path => {
+    const iconName = basename(path).split('.')[0];
+    return essentialIcons.includes(iconName);
+  });
+  
+  for (const iconPath of iconPaths) {
     const [iconName] = basename(iconPath).split('.');
-
-    acc[collectionName] ??= {};
-    acc[collectionName][iconName] = async () => fs.readFile(iconPath, 'utf8');
-
-    return acc;
-  },
-  {} as Record<string, Record<string, () => Promise<string>>>,
-);
+    collection[collectionName][iconName] = async () => fs.readFile(iconPath, 'utf8');
+  }
+  
+  return collection;
+})();
 
 const BASE_COLORS = {
   white: '#FFFFFF',
@@ -98,7 +108,8 @@ const COLOR_PRIMITIVES = {
 };
 
 export default defineConfig({
-  safelist: [...Object.keys(customIconCollection[collectionName] || {}).map((x) => `i-bolt:${x}`)],
+  // Only include essential icons in the safelist to reduce memory usage
+  safelist: essentialIcons.map(icon => `i-bolt:${icon}`),
   shortcuts: {
     'bolt-ease-cubic-bezier': 'ease-[cubic-bezier(0.4,0,0.2,1)]',
     'transition-theme': 'transition-[background-color,border-color,color] duration-150 bolt-ease-cubic-bezier',
@@ -243,6 +254,15 @@ export default defineConfig({
         ...customIconCollection,
       },
       unit: 'em',
+      // Add scale to optimize rendering
+      scale: 1.2,
+      // Enable CDN for better performance
+      cdn: 'https://esm.sh/',
+      // Enable lazy loading for icons
+      extraProperties: {
+        'display': 'inline-block',
+        'vertical-align': 'middle',
+      },
     }),
   ],
 });

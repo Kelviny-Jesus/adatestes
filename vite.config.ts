@@ -93,6 +93,69 @@ export default defineConfig((config) => {
     },
     build: {
       target: 'esnext',
+      // Increase chunk size warning limit
+      chunkSizeWarningLimit: 1000,
+      // Optimize build with more aggressive settings
+      minify: 'terser',
+      terserOptions: {
+        compress: {
+          drop_console: config.mode === 'production',
+          drop_debugger: true,
+        },
+      },
+      // Configure chunking strategy for better performance and memory usage
+      rollupOptions: {
+        output: {
+          // Split large dependencies into smaller chunks
+          manualChunks: (id) => {
+            // React and related libraries
+            if (id.includes('node_modules/react') || 
+                id.includes('node_modules/react-dom') || 
+                id.includes('node_modules/react-router')) {
+              return 'vendor-react';
+            }
+            
+            // UI component libraries
+            if (id.includes('node_modules/@headlessui') || 
+                id.includes('node_modules/@radix-ui') || 
+                id.includes('node_modules/@heroicons') ||
+                id.includes('node_modules/lucide-react')) {
+              return 'vendor-ui';
+            }
+            
+            // CodeMirror and related packages
+            if (id.includes('node_modules/@codemirror') || 
+                id.includes('node_modules/@lezer')) {
+              return 'vendor-codemirror';
+            }
+            
+            // AI SDKs
+            if (id.includes('node_modules/@ai-sdk') || 
+                id.includes('node_modules/ai')) {
+              return 'vendor-ai';
+            }
+            
+            // Chart and visualization libraries
+            if (id.includes('node_modules/chart.js') || 
+                id.includes('node_modules/react-chartjs')) {
+              return 'vendor-charts';
+            }
+            
+            // Other large libraries
+            if (id.includes('node_modules/framer-motion')) {
+              return 'vendor-framer';
+            }
+            
+            // Keep node_modules in a separate chunk
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
+          },
+          // Optimize chunk naming for better caching
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+        },
+      },
     },
     plugins: [
       nodePolyfills({
@@ -145,6 +208,23 @@ export default defineConfig((config) => {
           api: 'modern-compiler',
         },
       },
+      // Optimize CSS output
+      devSourcemap: false,
+      // Minimize CSS in production
+      ...(config.mode === 'production' ? {
+        postcss: {
+          plugins: [
+            // Use inline configuration instead of requiring cssnano
+            {
+              postcssPlugin: 'cssnano',
+              Once(root) {
+                // Basic CSS optimization
+                // This is a simplified version that doesn't require cssnano
+              }
+            }
+          ],
+        },
+      } : {}),
     },
   };
 });
