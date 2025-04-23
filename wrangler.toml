@@ -8,8 +8,10 @@ send_metrics = false
 # Build configuration for Cloudflare Pages
 [build]
   # Increase memory limit for build process
-  command = "NODE_OPTIONS=\"--max-old-space-size=4096\" pnpm run build"
+  command = "NODE_OPTIONS=\"--max-old-space-size=8192\" pnpm run build:optimized"
 
 # Define environment variables for build
 [vars]
   VITE_OPTIMIZE_MEMORY = "true"
+  VITE_DISABLE_SOURCEMAPS = "true"
+  VITE_REDUCE_BUNDLE_SIZE = "true"

@@ -11,9 +11,12 @@
     "email": "maintainers@bolt.diy"
   },
   "scripts": {
-    "deploy": "npm run build:optimized && wrangler pages deploy",
+    "deploy": "npm run build:split && wrangler pages deploy",
+    "deploy:direct": "node scripts/direct-upload.js",
+    "deploy:github": "echo 'Push to GitHub to trigger GitHub Actions deployment'",
     "build": "remix vite:build",
     "build:optimized": "node scripts/optimize-build.js",
+    "build:split": "node scripts/split-build.js",
     "dev": "node pre-start.cjs  && remix vite:dev",
     "test": "vitest --run",
     "test:watch": "vitest",

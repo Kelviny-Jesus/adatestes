@@ -94,11 +94,11 @@ export default defineConfig((config) => {
     build: {
       target: 'esnext',
       // Increase chunk size warning limit
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 2000,
       // Use esbuild instead of terser for minification (less memory intensive)
       minify: 'esbuild',
       // Disable source maps in production to reduce memory usage
-      sourcemap: false,
+      sourcemap: process.env.VITE_DISABLE_SOURCEMAPS === 'true' ? false : 'hidden',
       // Reduce memory usage during build
       assetsInlineLimit: 4096, // Reduce inlined assets size
       // Configure chunking strategy for better performance and memory usage
@@ -112,6 +112,15 @@ export default defineConfig((config) => {
         output: {
           // Use simpler chunking strategy to reduce memory usage
           manualChunks: (id) => {
+            // For split build process, use a simpler chunking strategy
+            if (process.env.VITE_SPLIT_BUILD === 'true') {
+              if (id.includes('node_modules')) {
+                return 'vendor';
+              }
+              return undefined;
+            }
+            
+            // For normal build, use a more detailed chunking strategy
             // React and related libraries
             if (id.includes('node_modules/react') || 
                 id.includes('node_modules/react-dom')) {

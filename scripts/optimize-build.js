@@ -20,10 +20,13 @@ const __dirname = path.dirname(__filename);
 const TEMP_DIRS_TO_CLEAN = [
   '.cache',
   'node_modules/.cache',
-  'node_modules/.vite'
+  'node_modules/.vite',
+  'build',
+  '.wrangler',
+  'dist'
 ];
 
-const NODE_MEMORY = 4096; // MB
+const NODE_MEMORY = 8192; // MB - Increased to 8GB
 
 console.log('🚀 Starting build optimization...');
 
